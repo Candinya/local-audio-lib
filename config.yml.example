@@ -1,0 +1,8 @@
+system:
+  debug: false
+  listen: ":1323"
+  redis_conn: "redis://redis:6379/0"
+library:
+  path: "./audio"
+  extensions:
+    - "mp3"

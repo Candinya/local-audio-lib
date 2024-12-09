@@ -1,0 +1,24 @@
+services:
+  local-audio-db:
+    image: ghcr.io/candinya/local-audio-db:main
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - "./config.yml:/app/config.yml:ro"
+      - "./audio:/app/audio:ro"
+    networks:
+      - internal_network
+      - external_network
+    ports:
+      - "127.0.0.1:1323:1323"
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    networks:
+      - internal_network
+
+networks:
+  internal_network:
+    internal: true
+  external_network:
