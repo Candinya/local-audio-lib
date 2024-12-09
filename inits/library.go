@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/bogem/id3v2"
 	"go.uber.org/zap"
@@ -14,13 +15,13 @@ import (
 	g "local-audio-lib/global"
 	"local-audio-lib/types"
 	"local-audio-lib/utils"
-	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 )
 
 // processFile : 对每一个文件计算摘要得到 ID ，根据 ID 检查旧索引，有则直接迁移入新索引，无则创建新的数据
-func processFile(fileName string, fileExt string, oldIndex *types.PrivateIndex, newIndex *types.PrivateIndex) error {
+func processFile(fileName string, fileExt string, coverLibPath string, oldIndex *types.PrivateIndex, newIndex *types.PrivateIndex) error {
 	// 打开文件
 	f, err := os.Open(fileName)
 	if err != nil {
@@ -70,25 +71,19 @@ func processFile(fileName string, fileExt string, oldIndex *types.PrivateIndex, 
 			// 找到图片了，记录图片
 			hasCover = true
 
-			g.Rdb.HSet(context.Background(), constants.CacheKeyCoverContent, fileHash, pic.Picture)
-
-			// 记录图片的 MimeType
-			var picMime string
-			if pic.MimeType != "" {
-				picMime = pic.MimeType
-			} else {
-				picMime = http.DetectContentType(pic.Picture)
+			coverPath := path.Join(coverLibPath, fileHash)
+			err = os.WriteFile(coverPath, pic.Picture, 0644)
+			if err != nil {
+				return fmt.Errorf("封面保存失败 %s: %v", fileName, err)
 			}
-			g.Rdb.HSet(context.Background(), constants.CacheKeyCoverMimeType, fileHash, picMime)
 
-			break // 不用再处理其他文件了
+			break // 找到了，就不用再处理其他文件了
 		}
 	}
 
 	// 创建索引
 	indexItem := types.PrivateIndexItem{
-		HasCover:       hasCover,
-		AudioExtension: fileExt,
+		HasCover: hasCover,
 	}
 	if tagTitle := tag.Title(); tagTitle != "" {
 		indexItem.Name = tagTitle
@@ -111,6 +106,18 @@ func processFile(fileName string, fileExt string, oldIndex *types.PrivateIndex, 
 
 // Library : 扫描路径下的所有音频文件，生成索引
 func Library(cfg config.LibraryConfig) error {
+	// 检查封面目录
+	if _, err := os.Stat(cfg.Path.Cover); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			err = os.MkdirAll(cfg.Path.Cover, os.ModePerm)
+			if err != nil {
+				return fmt.Errorf("封面路径不存在且无法被创建: %v", err)
+			}
+		} else {
+			return fmt.Errorf("无法确认封面路径是否存在: %v", err)
+		}
+	} // else 已经存在
+
 	// 检查是否有旧的索引
 	var oldIndex types.PrivateIndex
 
@@ -132,7 +139,7 @@ func Library(cfg config.LibraryConfig) error {
 	newIndex := make(types.PrivateIndex)
 
 	// 读取文件列表
-	allFiles, err := utils.ListFileRecursive(cfg.Path)
+	allFiles, err := utils.ListFileRecursive(cfg.Path.Audio)
 	if err != nil {
 		return fmt.Errorf("无法列出目录: %v", err)
 	}
@@ -145,7 +152,7 @@ func Library(cfg config.LibraryConfig) error {
 		fileExt := filepath.Ext(fileName)
 		if processAnyExtension || utils.ArrayHas(cfg.Extensions, fileExt) {
 			// 处理文件
-			if err = processFile(fileName, fileExt, &oldIndex, &newIndex); err != nil {
+			if err = processFile(fileName, fileExt, cfg.Path.Cover, &oldIndex, &newIndex); err != nil {
 				// return fmt.Errorf("无法处理文件: %v", err)
 				g.L.Error("无法处理文件", zap.String("fileName", fileName), zap.Error(err))
 				// 忽略这个文件
@@ -161,12 +168,11 @@ func Library(cfg config.LibraryConfig) error {
 
 	g.Rdb.Set(context.Background(), constants.CacheKeyIndex, newIndexBytes, 0)
 
-	// 删除旧索引中遗失的记录
+	// 删除旧索引中剩余的记录
 	for oldFileHash, oldItem := range oldIndex {
 		g.Rdb.HDel(context.Background(), constants.CacheKeyAudioFile, oldFileHash)
 		if oldItem.HasCover {
-			g.Rdb.HDel(context.Background(), constants.CacheKeyCoverMimeType, oldFileHash)
-			g.Rdb.HDel(context.Background(), constants.CacheKeyCoverContent, oldFileHash)
+			_ = os.Remove(path.Join(cfg.Path.Cover, oldFileHash)) // 忽略错误
 		}
 	}
 

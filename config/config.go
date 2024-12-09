@@ -12,6 +12,9 @@ type SystemConfig struct {
 }
 
 type LibraryConfig struct {
-	Path       string   `yaml:"path"`       // 内容库的路径
+	Path struct {
+		Audio string `yaml:"audio"`
+		Cover string `yaml:"cover"`
+	} `yaml:"path"`                         // 内容库的路径
 	Extensions []string `yaml:"extensions"` // 需要索引的后缀名
 }

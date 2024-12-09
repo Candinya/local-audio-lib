@@ -10,9 +10,6 @@ type PrivateIndexItem struct {
 	// 附加信息
 	HasCover bool `json:"has_cover"`
 	//HasLyrics bool `json:"has_lyrics"`
-
-	// 内容类型
-	AudioExtension string `json:"audio_ext"` // 扩展名
 }
 
 type PrivateIndex = map[string]PrivateIndexItem

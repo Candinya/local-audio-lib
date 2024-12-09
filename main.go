@@ -32,7 +32,7 @@ func main() {
 	}
 
 	// 启动服务器
-	if err = inits.WebServer(cfg.System.Listen); err != nil {
+	if err = inits.WebServer(cfg.System.Listen, cfg.Library.Path.Cover); err != nil {
 		g.L.Fatal("服务启动失败", zap.Error(err))
 	}
 }

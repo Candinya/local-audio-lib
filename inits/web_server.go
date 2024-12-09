@@ -6,7 +6,7 @@ import (
 	"local-audio-lib/handlers"
 )
 
-func router(e *echo.Echo) {
+func router(e *echo.Echo, coverPath string) {
 	// 健康状态检查
 	e.GET("/", handlers.Health)
 
@@ -14,13 +14,13 @@ func router(e *echo.Echo) {
 	e.GET("/index", handlers.Index)
 
 	// 封面图片
-	e.GET("/cover/:id", handlers.Cover)
+	e.Static("/cover", coverPath)
 
 	// 音频文件
 	e.GET("/audio/:id", handlers.Audio)
 }
 
-func WebServer(listen string) error {
+func WebServer(listen string, coverPath string) error {
 	// 创建服务器
 	e := echo.New()
 
@@ -28,7 +28,7 @@ func WebServer(listen string) error {
 	e.Use(middleware.CORS())
 
 	// 绑定路由
-	router(e)
+	router(e, coverPath)
 
 	// 启动服务器
 	return e.Start(listen)

@@ -33,7 +33,7 @@ func Index(c echo.Context) error {
 	var publicIndex types.PublicIndex
 	for fileHash, privateItem := range privateIndex {
 		publicItem := types.PublicIndexItem{
-			URL:    fmt.Sprintf("//%s/audio/%s%s", host, fileHash, privateItem.AudioExtension),
+			URL:    fmt.Sprintf("//%s/audio/%s", host, fileHash),
 			Name:   privateItem.Name,
 			Artist: privateItem.Artist,
 			Album:  privateItem.Album,
