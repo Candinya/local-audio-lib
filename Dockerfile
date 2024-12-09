@@ -16,7 +16,7 @@ COPY . .
 # Build image
 RUN go build -o app .
 
-FROM alpine AS runner
+FROM scratch AS runner
 
 WORKDIR /app
 
