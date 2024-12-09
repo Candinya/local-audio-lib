@@ -2,8 +2,6 @@ services:
   server:
     image: ghcr.io/candinya/local-audio-lib:main
     restart: unless-stopped
-    env_file:
-      - .env
     volumes:
       - "./config.yml:/app/config.yml:ro"
       - "./data:/app/data"
