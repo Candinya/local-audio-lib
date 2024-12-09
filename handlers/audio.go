@@ -17,6 +17,9 @@ func Audio(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "缓存读取失败")
 	}
 
+	// 设置超大缓存（一周）
+	c.Response().Header().Add("Cache-Control", "max-age=604800")
+
 	// 返回文件
 	return c.File(audioPath)
 }
