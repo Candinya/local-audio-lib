@@ -121,11 +121,11 @@ func Library(cfg config.LibraryConfig) error {
 	// 检查是否有旧的索引
 	var oldIndex types.PrivateIndex
 
-	if exist, err := g.Rdb.Exists(context.Background(), constants.CacheKeyIndex).Result(); err != nil {
+	if exist, err := g.Rdb.Exists(context.Background(), constants.CacheKeyIndexPrivate).Result(); err != nil {
 		return fmt.Errorf("无法检测是否存在旧索引: %v", err)
 	} else if exist > 0 {
 		// 存在旧索引，尝试读取
-		if oldIndexBytes, err := g.Rdb.Get(context.Background(), constants.CacheKeyIndex).Bytes(); err != nil {
+		if oldIndexBytes, err := g.Rdb.Get(context.Background(), constants.CacheKeyIndexPrivate).Bytes(); err != nil {
 			return fmt.Errorf("无法读取旧索引: %v", err)
 		} else if err = json.Unmarshal(oldIndexBytes, &oldIndex); err != nil {
 			return fmt.Errorf("无法格式化旧索引，可能格式损坏: %v", err)
@@ -166,7 +166,7 @@ func Library(cfg config.LibraryConfig) error {
 		return fmt.Errorf("新索引格式化失败: %v", err)
 	}
 
-	g.Rdb.Set(context.Background(), constants.CacheKeyIndex, newIndexBytes, 0)
+	g.Rdb.Set(context.Background(), constants.CacheKeyIndexPrivate, newIndexBytes, 0)
 
 	// 删除旧索引中剩余的记录
 	for oldFileHash, oldItem := range oldIndex {
@@ -175,6 +175,9 @@ func Library(cfg config.LibraryConfig) error {
 			_ = os.Remove(path.Join(cfg.Path.Cover, oldFileHash)) // 忽略错误
 		}
 	}
+
+	// 清空旧的站点索引
+	g.Rdb.Del(context.Background(), constants.CacheKeyIndexPublic)
 
 	// 处理完成，返回
 	return nil

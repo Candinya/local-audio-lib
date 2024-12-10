@@ -14,11 +14,29 @@ import (
 func Index(c echo.Context) error {
 	// 获取当前请求信息，方便拼接
 	host := c.Request().Host
+	rctx := c.Request().Context()
+
+	// 检查公开索引是否已经缓存
+	exist, err := g.Rdb.HExists(rctx, constants.CacheKeyIndexPublic, host).Result()
+	if err != nil {
+		// 缓存检查失败，忽略缓存继续处理
+		g.L.Error("站点缓存检查失败", zap.Error(err))
+	} else if exist {
+		// 存在
+		dataBytes, err := g.Rdb.HGet(rctx, constants.CacheKeyIndexPublic, host).Bytes()
+		if err != nil {
+			// 缓存读取失败，忽略缓存继续处理
+			g.L.Error("站点缓存读取失败", zap.Error(err))
+		} else {
+			// 直接以二进制形式发送
+			return c.Blob(http.StatusOK, "application/json", dataBytes)
+		}
+	}
 
 	// 读取缓存
-	indexBytes, err := g.Rdb.Get(c.Request().Context(), constants.CacheKeyIndex).Bytes()
+	indexBytes, err := g.Rdb.Get(rctx, constants.CacheKeyIndexPrivate).Bytes()
 	if err != nil {
-		g.L.Error("缓存读取失败", zap.Error(err))
+		g.L.Error("主索引缓存读取失败", zap.Error(err))
 		return c.String(http.StatusInternalServerError, "缓存读取失败")
 	}
 
@@ -47,6 +65,15 @@ func Index(c echo.Context) error {
 		publicIndex = append(publicIndex, publicItem)
 	}
 
-	// 以建立的公开索引响应
-	return c.JSON(http.StatusOK, publicIndex)
+	publicIndexBytes, err := json.Marshal(publicIndex)
+	if err != nil {
+		g.L.Error("站点缓存数据格式化失败", zap.Error(err))
+		return c.String(http.StatusInternalServerError, "站点缓存数据格式化失败")
+	}
+
+	// 存入缓存
+	g.Rdb.HSet(rctx, constants.CacheKeyIndexPublic, host, publicIndexBytes)
+
+	// 直接以二进制形式发送
+	return c.Blob(http.StatusOK, "application/json", publicIndexBytes)
 }
