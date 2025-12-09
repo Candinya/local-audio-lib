@@ -17,9 +17,9 @@ func ListFileRecursive(root string) ([]string, error) {
 			subContents, err := ListFileRecursive(filepath.Join(root, content.Name()))
 			if err != nil {
 				return nil, err
-			} else {
-				fileNames = append(fileNames, subContents...)
 			}
+
+			fileNames = append(fileNames, subContents...)
 		} else {
 			fileNames = append(fileNames, filepath.Join(root, content.Name()))
 		}
