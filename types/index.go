@@ -8,7 +8,8 @@ type PrivateIndexItem struct {
 	Album  *string `json:"album,omitempty"`
 
 	// 附加信息
-	HasCover bool `json:"has_cover"`
+	HasCover        bool   `json:"has_cover"`
+	CoverThemeColor string `json:"cover_theme,omitempty"` // 封面的主题颜色
 	//HasLyrics bool `json:"has_lyrics"`
 }
 
@@ -23,6 +24,7 @@ type PublicIndexItem struct {
 	Album  *string `json:"album,omitempty"`  // 专辑名
 
 	Cover *string `json:"cover,omitempty"` // 封面 /cover/id.ext
+	Theme *string `json:"theme,omitempty"` // 提取封面主色作为主题颜色
 	//Lyrics *string `json:"lrc,omitempty"`
 }
 

@@ -61,6 +61,7 @@ func Index(c echo.Context) error {
 		if privateItem.HasCover {
 			coverUrl := fmt.Sprintf("//%s/cover/%s", host, fileHash)
 			publicItem.Cover = &coverUrl
+			publicItem.Theme = &privateItem.CoverThemeColor
 		}
 
 		publicIndex = append(publicIndex, publicItem)

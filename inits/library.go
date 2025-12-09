@@ -1,12 +1,17 @@
 package inits
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/color"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"local-audio-lib/config"
 	"local-audio-lib/constants"
@@ -18,6 +23,7 @@ import (
 	"path/filepath"
 
 	"github.com/bogem/id3v2"
+	"github.com/marekm4/color-extractor"
 	"go.uber.org/zap"
 )
 
@@ -62,9 +68,11 @@ func processFile(fileName string, fileExt string, coverLibPath string, oldIndex 
 	if err != nil {
 		return fmt.Errorf("文件 id3 标签读取失败 %s: %v", fileName, err)
 	}
+	defer tag.Close()
 
 	// 读取封面
 	hasCover := false
+	var coverThemeColors []color.Color
 	pictures := tag.GetFrames(tag.CommonID("Attached picture"))
 	for _, f := range pictures {
 		pic, ok := f.(id3v2.PictureFrame)
@@ -76,6 +84,14 @@ func processFile(fileName string, fileExt string, coverLibPath string, oldIndex 
 			err = os.WriteFile(coverPath, pic.Picture, 0644)
 			if err != nil {
 				return fmt.Errorf("封面保存失败 %s: %v", fileName, err)
+			}
+
+			// 提取封面主题色
+			img, _, err := image.Decode(bytes.NewReader(pic.Picture))
+			if err != nil {
+				g.L.Warn("封面解码失败")
+			} else {
+				coverThemeColors = color_extractor.ExtractColors(img)
 			}
 
 			break // 找到了，就不用再处理其他文件了
@@ -98,6 +114,10 @@ func processFile(fileName string, fileExt string, coverLibPath string, oldIndex 
 	}
 	if tagAlbum := tag.Album(); tagAlbum != "" {
 		indexItem.Album = &tagAlbum
+	}
+	if hasCover && len(coverThemeColors) > 0 {
+		R, G, B, _ := coverThemeColors[0].RGBA()
+		indexItem.CoverThemeColor = fmt.Sprintf("#%02x%02x%02x", uint8(R>>8), uint8(G>>8), uint8(B>>8))
 	}
 
 	(*newIndex)[fileHash] = indexItem

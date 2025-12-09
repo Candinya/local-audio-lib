@@ -7,6 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/bogem/id3v2 v1.2.0
 	github.com/labstack/echo/v4 v4.13.4
+	github.com/marekm4/color-extractor v1.2.1
 	github.com/redis/go-redis/v9 v9.17.2
 	go.uber.org/zap v1.27.1
 	gopkg.in/yaml.v3 v3.0.1
