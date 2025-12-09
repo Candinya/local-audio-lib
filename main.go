@@ -1,10 +1,11 @@
 package main
 
 import (
-	"go.uber.org/zap"
 	g "local-audio-lib/global"
 	"local-audio-lib/inits"
 	"log"
+
+	"go.uber.org/zap"
 )
 
 func main() {
