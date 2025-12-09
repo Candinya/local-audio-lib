@@ -3,12 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 	"local-audio-lib/constants"
 	g "local-audio-lib/global"
 	"local-audio-lib/types"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 func Index(c echo.Context) error {

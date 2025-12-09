@@ -1,9 +1,10 @@
 package inits
 
 import (
-	"gopkg.in/yaml.v3"
 	"local-audio-lib/config"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
 func Config() (*config.Config, error) {

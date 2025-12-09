@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"github.com/labstack/echo/v4"
-	"go.uber.org/zap"
 	"local-audio-lib/constants"
 	g "local-audio-lib/global"
 	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"go.uber.org/zap"
 )
 
 func Audio(c echo.Context) error {

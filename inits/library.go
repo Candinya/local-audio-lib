@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/bogem/id3v2"
-	"go.uber.org/zap"
 	"io"
 	"local-audio-lib/config"
 	"local-audio-lib/constants"
@@ -18,6 +16,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/bogem/id3v2"
+	"go.uber.org/zap"
 )
 
 // processFile : 对每一个文件计算摘要得到 ID ，根据 ID 检查旧索引，有则直接迁移入新索引，无则创建新的数据

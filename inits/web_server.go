@@ -1,9 +1,10 @@
 package inits
 
 import (
+	"local-audio-lib/handlers"
+
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"local-audio-lib/handlers"
 )
 
 func router(e *echo.Echo, coverPath string) {
